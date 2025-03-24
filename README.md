@@ -16,7 +16,7 @@ Meme Tailor is a modern web application that transforms ordinary meme templates 
 
 ## Tech Stack
 
-- **Frontend**: Next.js 14 with App Router, React, TypeScript
+- **Frontend**: Next.js 15
 - **Styling**: Tailwind CSS with Shadcn UI components
 - **AI**: Google Generative AI (Gemini 1.5 Pro)
 - **Rate Limiting**: Upstash Redis for rate limiting
