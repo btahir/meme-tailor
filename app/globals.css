@@ -152,4 +152,5 @@
   /* Clean font rendering */
   -webkit-font-smoothing: antialiased;
   font-weight: 700;
+  font-size: 1rem;
 }

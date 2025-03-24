@@ -259,14 +259,14 @@ export function MemeGrid({
                             />
                             {topText && (
                               <div className="absolute top-2 left-0 right-0 text-center">
-                                <p className="text-white text-lg font-bold uppercase break-words mx-2 text-shadow-meme">
+                                <p className="text-white font-bold uppercase break-words mx-2 text-shadow-meme">
                                   {topText}
                                 </p>
                               </div>
                             )}
                             {bottomText && (
                               <div className="absolute bottom-2 left-0 right-0 text-center">
-                                <p className="text-white text-lg font-bold uppercase break-words mx-2 text-shadow-meme">
+                                <p className="text-white font-bold uppercase break-words mx-2 text-shadow-meme">
                                   {bottomText}
                                 </p>
                               </div>
