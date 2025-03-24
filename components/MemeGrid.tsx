@@ -182,10 +182,10 @@ export function MemeGrid({ memes, selectedMeme: initialSelectedMeme }: MemeGridP
                   
                   {/* Error Alert - Mobile */}
                   {error && (
-                    <Alert variant="destructive" className="mb-4 animate-in fade-in slide-in-from-top-5 duration-500">
+                    <Alert variant="destructive" className="mb-3 animate-in fade-in slide-in-from-top-5 duration-500">
                       <AlertTriangle className="h-4 w-4" />
                       <AlertTitle>Error</AlertTitle>
-                      <AlertDescription>
+                      <AlertDescription className="text-sm">
                         {error.includes("Rate limit") 
                           ? "You've hit the rate limit. Please wait a few minutes before trying again." 
                           : error}
@@ -194,7 +194,7 @@ export function MemeGrid({ memes, selectedMeme: initialSelectedMeme }: MemeGridP
                   )}
 
                   {/* Mobile Form */}
-                  <form onSubmit={handleSubmitEdit} className="space-y-5">
+                  <form onSubmit={handleSubmitEdit} className="space-y-3">
                     <input type="hidden" name="memeId" value={selectedMeme.id} />
                     <input type="hidden" name="boxCount" value={selectedMeme.box_count} />
 
@@ -285,7 +285,7 @@ export function MemeGrid({ memes, selectedMeme: initialSelectedMeme }: MemeGridP
             className={`border-2 ${selectedMeme ? "border-pink-300 dark:border-pink-700" : "border-gray-200 dark:border-gray-700"} shadow-xl h-full`}
           >
             <div className="bg-gradient-to-r from-pink-500 via-purple-500 to-indigo-500 h-2"></div>
-            <CardContent className="px-2">
+            <CardContent className="px-2 overflow-y-auto flex flex-col h-[calc(100%-8px)]">
               {selectedMeme ? (
                 <div className="space-y-6">
                   <div className="flex items-center gap-2">
@@ -313,10 +313,10 @@ export function MemeGrid({ memes, selectedMeme: initialSelectedMeme }: MemeGridP
                   </div>
                   
                   {error && (
-                    <Alert variant="destructive" className="mt-4 animate-in fade-in slide-in-from-top-5 duration-500">
+                    <Alert variant="destructive" className="mt-2 mb-2 animate-in fade-in slide-in-from-top-5 duration-500">
                       <AlertTriangle className="h-4 w-4" />
                       <AlertTitle>Error</AlertTitle>
-                      <AlertDescription>
+                      <AlertDescription className="text-sm">
                         {error.includes("Rate limit") 
                           ? "You've hit the rate limit. Please wait a few minutes before trying again." 
                           : error}
@@ -324,7 +324,7 @@ export function MemeGrid({ memes, selectedMeme: initialSelectedMeme }: MemeGridP
                     </Alert>
                   )}
 
-                  <form onSubmit={handleSubmitEdit} className="space-y-5">
+                  <form onSubmit={handleSubmitEdit} className="space-y-3 flex-shrink-0">
                     <input type="hidden" name="memeId" value={selectedMeme.id} />
                     <input type="hidden" name="boxCount" value={selectedMeme.box_count} />
 
