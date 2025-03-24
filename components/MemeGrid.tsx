@@ -3,10 +3,19 @@
 import { useState, type FormEvent } from "react"
 import type { Meme } from "@/types/meme"
 import { selectMeme, submitMemeEdit } from "@/app/actions"
-import { Sparkles, Download, RefreshCw, Zap } from "lucide-react"
+import { Sparkles, Download, RefreshCw, Zap, Edit } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Textarea } from "@/components/ui/textarea"
+import {
+  Drawer,
+  DrawerClose,
+  DrawerContent,
+  DrawerDescription,
+  DrawerHeader,
+  DrawerTitle,
+  DrawerTrigger,
+} from "@/components/ui/drawer"
 
 interface MemeGridProps {
   memes: Meme[]
@@ -127,8 +136,138 @@ export default function MemeGrid({ memes }: MemeGridProps) {
           </div>
         </div>
 
-        {/* Edit panel for selected meme with fun styling */}
-        <div className="w-full lg:w-1/3 flex flex-col gap-4">
+        {/* Mobile drawer trigger button - only visible when a meme is selected */}
+        {selectedMeme && (
+          <div className="fixed bottom-6 right-6 z-20 lg:hidden">
+            <Drawer>
+              <DrawerTrigger asChild>
+                <Button 
+                  className="bg-gradient-to-r from-pink-600 to-indigo-600 rounded-full h-14 w-14 shadow-lg"
+                  size="icon"
+                >
+                  <Edit className="h-6 w-6" />
+                </Button>
+              </DrawerTrigger>
+              <DrawerContent>
+                <DrawerHeader>
+                  <DrawerTitle className="text-center text-xl font-bold bg-gradient-to-r from-pink-600 to-indigo-500 text-transparent bg-clip-text">
+                    Edit Your Meme
+                  </DrawerTitle>
+                  <DrawerDescription className="text-center text-gray-500 dark:text-gray-400">
+                    Customize your selected meme with funny text
+                  </DrawerDescription>
+                </DrawerHeader>
+                
+                {/* Mobile Meme Editor Content */}
+                <div className="p-4 pb-8">
+                  {/* Meme Preview */}
+                  <div className="relative group mb-6 flex justify-center">
+                    <div className="absolute -inset-1 bg-gradient-to-r from-pink-500 via-purple-500 to-indigo-500 rounded-lg blur opacity-30 group-hover:opacity-70 transition duration-1000"></div>
+                    <div className="relative bg-white dark:bg-gray-800 p-2 rounded-lg">
+                      {generatedMemeUrl ? (
+                        <img
+                          src={generatedMemeUrl || "/placeholder.svg"}
+                          alt="Generated Meme"
+                          className="max-h-[200px] max-w-full object-contain rounded"
+                        />
+                      ) : (
+                        <img
+                          src={selectedMeme.url || "/placeholder.svg"}
+                          alt={selectedMeme.name}
+                          className="max-h-[200px] max-w-full object-contain rounded"
+                        />
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Mobile Form */}
+                  <form onSubmit={handleSubmitEdit} className="space-y-5">
+                    <input type="hidden" name="memeId" value={selectedMeme.id} />
+                    <input type="hidden" name="boxCount" value={selectedMeme.box_count} />
+
+                    <div>
+                      <label htmlFor="text0-mobile" className="block text-sm font-bold mb-2 text-pink-700 dark:text-pink-300">
+                        Make It Funny 🤣
+                      </label>
+                      <Textarea
+                        id="text0-mobile"
+                        name="text0"
+                        placeholder="Type something hilarious..."
+                        rows={3}
+                        disabled={isSubmittingEdit}
+                        className="w-full border-2 border-pink-200 dark:border-pink-800 focus:border-pink-400 focus:ring-pink-400 rounded-lg
+                               text-base font-medium placeholder:text-pink-300 dark:placeholder:text-pink-700"
+                      />
+                    </div>
+
+                    <div className="flex gap-3">
+                      <Button
+                        type="submit"
+                        disabled={isSubmittingEdit}
+                        className="flex-1 bg-gradient-to-r from-pink-600 via-purple-600 to-indigo-600 hover:from-pink-700 hover:via-purple-700 hover:to-indigo-700 
+                             text-white font-bold py-3 px-4 rounded-lg shadow-lg hover:shadow-xl transition-all
+                             disabled:opacity-70 disabled:cursor-not-allowed"
+                      >
+                        {isSubmittingEdit ? (
+                          <>
+                            <div className="h-5 w-5 border-t-2 border-l-2 border-white rounded-full animate-spin mr-2"></div>
+                            Creating...
+                          </>
+                        ) : (
+                          <>
+                            <Sparkles className="w-5 h-5 mr-2" />
+                            Generate
+                          </>
+                        )}
+                      </Button>
+
+                      {generatedMemeUrl && (
+                        <Button
+                          type="button"
+                          onClick={() => setGeneratedMemeUrl(null)}
+                          variant="outline"
+                          className="bg-transparent border-2 border-pink-300 dark:border-pink-700 text-pink-700 dark:text-pink-300
+                               hover:bg-pink-50 dark:hover:bg-pink-900/30 font-bold rounded-lg w-12 flex-shrink-0 flex items-center justify-center"
+                        >
+                          <RefreshCw className="w-4 h-4" />
+                        </Button>
+                      )}
+                    </div>
+
+                    {generatedMemeUrl && (
+                      <div className="mt-4 flex justify-center animate-in fade-in slide-in-from-bottom-5 duration-500">
+                        <Button
+                          asChild
+                          className="bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700
+                               text-white font-bold py-2 px-6 rounded-full shadow-lg hover:shadow-xl transition-all w-full"
+                        >
+                          <a href={generatedMemeUrl} download="viral-meme.jpg">
+                            <Download className="w-5 h-5 mr-2" />
+                            Download & Share
+                          </a>
+                        </Button>
+                      </div>
+                    )}
+                  </form>
+
+                  <div className="mt-6 w-full">
+                    <DrawerClose asChild>
+                      <Button 
+                        variant="outline" 
+                        className="w-full border-2 border-gray-200 dark:border-gray-700"
+                      >
+                        Close Editor
+                      </Button>
+                    </DrawerClose>
+                  </div>
+                </div>
+              </DrawerContent>
+            </Drawer>
+          </div>
+        )}
+
+        {/* Desktop Edit panel - hidden on mobile */}
+        <div className="w-full lg:w-1/3 flex-col gap-4 hidden lg:flex">
           <Card
             className={`border-2 ${selectedMeme ? "border-pink-300 dark:border-pink-700" : "border-gray-200 dark:border-gray-700"} shadow-xl overflow-hidden`}
           >
@@ -252,4 +391,3 @@ export default function MemeGrid({ memes }: MemeGridProps) {
     </div>
   )
 }
-
