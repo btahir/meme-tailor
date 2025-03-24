@@ -9,8 +9,8 @@ const fontMain = Jost({
 });
 
 export const metadata: Metadata = {
-  title: "Meme Tailor",
-  description: "Create personalized memes to go viral",
+  title: "Meme Tailor | Create Your Own Personalized Viral Memes",
+  description: "Personalize the most popular memes into viral masterpieces with Meme Tailor.",
 };
 
 export default function RootLayout({
