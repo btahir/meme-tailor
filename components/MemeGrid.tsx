@@ -1,12 +1,19 @@
-"use client"
+"use client";
 
-import { useState, type FormEvent, useRef, useEffect } from "react"
-import type { Meme } from "@/types/meme"
-import { submitMemeEdit } from "@/app/actions"
-import { Sparkles, Download, RefreshCw, Zap, Edit, AlertTriangle } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent } from "@/components/ui/card"
-import { Textarea } from "@/components/ui/textarea"
+import { useState, type FormEvent, useRef, useEffect } from "react";
+import type { Meme } from "@/types/meme";
+import { submitMemeEdit } from "@/app/actions";
+import {
+  Sparkles,
+  Download,
+  RefreshCw,
+  Zap,
+  Edit,
+  AlertTriangle,
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Textarea } from "@/components/ui/textarea";
 import {
   Drawer,
   DrawerClose,
@@ -15,86 +22,114 @@ import {
   DrawerHeader,
   DrawerTitle,
   DrawerTrigger,
-} from "@/components/ui/drawer"
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
-import * as htmlToImage from 'html-to-image'
+} from "@/components/ui/drawer";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import * as htmlToImage from "html-to-image";
 
 interface MemeGridProps {
-  memes: Meme[]
-  selectedMeme?: Meme
+  memes: Meme[];
+  selectedMeme?: Meme;
 }
 
-export function MemeGrid({ memes, selectedMeme: initialSelectedMeme }: MemeGridProps) {
-  const [isSubmittingEdit, setIsSubmittingEdit] = useState(false)
-  const [generatedMemeUrl, setGeneratedMemeUrl] = useState<string | null>(null)
-  const [isSelectingMeme, setIsSelectingMeme] = useState(false)
-  const [selectedMeme, setSelectedMeme] = useState<Meme | undefined>(initialSelectedMeme)
-  const [error, setError] = useState<string | null>(null)
-  const [topText, setTopText] = useState("")
-  const [bottomText, setBottomText] = useState("")
-  const [isCapturing, setIsCapturing] = useState(false)
-  const memeRef = useRef<HTMLDivElement>(null)
+export function MemeGrid({
+  memes,
+  selectedMeme: initialSelectedMeme,
+}: MemeGridProps) {
+  const [isSubmittingEdit, setIsSubmittingEdit] = useState(false);
+  const [generatedMemeUrl, setGeneratedMemeUrl] = useState<string | null>(null);
+  const [isSelectingMeme, setIsSelectingMeme] = useState(false);
+  const [selectedMeme, setSelectedMeme] = useState<Meme | undefined>(
+    initialSelectedMeme
+  );
+  const [error, setError] = useState<string | null>(null);
+  const [topText, setTopText] = useState("");
+  const [bottomText, setBottomText] = useState("");
+  const [isCapturing, setIsCapturing] = useState(false);
+  const memeRef = useRef<HTMLDivElement>(null);
 
   const handleSelectMeme = (meme: Meme) => {
-    setIsSelectingMeme(true)
-    setSelectedMeme(meme)
-    setGeneratedMemeUrl(null)
-    setTopText("")
-    setBottomText("")
-    setError(null)
-    setIsSelectingMeme(false)
-  }
+    setIsSelectingMeme(true);
+    setSelectedMeme(meme);
+    setGeneratedMemeUrl(null);
+    setTopText("");
+    setBottomText("");
+    setError(null);
+    setIsSelectingMeme(false);
+  };
 
   const handleSubmitEdit = async (e: FormEvent<HTMLFormElement>) => {
-    e.preventDefault()
-    if (!selectedMeme) return
+    e.preventDefault();
+    if (!selectedMeme) return;
 
-    setIsSubmittingEdit(true)
-    setGeneratedMemeUrl(null)
-    setError(null)
+    setIsSubmittingEdit(true);
+    setGeneratedMemeUrl(null);
+    setError(null);
 
     try {
-      const formData = new FormData(e.currentTarget)
-      const result = await submitMemeEdit(formData)
+      const formData = new FormData(e.currentTarget);
+      const result = await submitMemeEdit(formData);
 
       if (result.success && result.imageUrl) {
-        setGeneratedMemeUrl(result.imageUrl)
+        setGeneratedMemeUrl(result.imageUrl);
       } else {
-        console.error("Error generating meme:", result.error)
-        setError(result.error || "Failed to generate meme")
+        console.error("Error generating meme:", result.error);
+        setError(result.error || "Failed to generate meme");
       }
     } catch (error) {
       if (error instanceof Error && error.message.includes("429")) {
-        setError("You've hit the rate limit. Please wait a few minutes before trying again.")
+        setError(
+          "You've hit the rate limit. Please wait a few minutes before trying again."
+        );
       } else {
-        console.error("Error submitting edit:", error)
-        setError("An unexpected error occurred")
+        console.error("Error submitting edit:", error);
+        setError("An unexpected error occurred");
       }
     } finally {
-      setIsSubmittingEdit(false)
+      setIsSubmittingEdit(false);
     }
-  }
+  };
 
   const captureScreenshot = () => {
     if (memeRef.current) {
       setIsCapturing(true);
+
+      // Temporarily remove rounded corners for the screenshot
+      const originalClasses = memeRef.current.className;
+      memeRef.current.classList.add("rounded-none");
+
       htmlToImage
-        .toPng(memeRef.current)
+        .toPng(memeRef.current, {
+          style: {
+            borderRadius: "0",
+            overflow: "hidden",
+          },
+          skipFonts: false, // Include fonts to ensure text renders properly
+        })
         .then((dataUrl) => {
           setIsCapturing(false);
-          
+
+          // Restore original classes
+          if (memeRef.current && originalClasses) {
+            memeRef.current.className = originalClasses;
+          }
+
           // Create a download link and trigger it automatically
-          const downloadLink = document.createElement('a');
+          const downloadLink = document.createElement("a");
           downloadLink.href = dataUrl;
-          downloadLink.download = 'viral-meme.jpg';
+          downloadLink.download = "viral-meme.jpg";
           document.body.appendChild(downloadLink);
           downloadLink.click();
           document.body.removeChild(downloadLink);
         })
         .catch((error) => {
-          console.error('Error generating screenshot:', error);
-          setError('Failed to generate screenshot');
+          console.error("Error generating screenshot:", error);
+          setError("Failed to generate screenshot");
           setIsCapturing(false);
+
+          // Ensure we restore the original classes even on error
+          if (memeRef.current && originalClasses) {
+            memeRef.current.className = originalClasses;
+          }
         });
     }
   };
@@ -122,8 +157,9 @@ export function MemeGrid({ memes, selectedMeme: initialSelectedMeme }: MemeGridP
             Meme <span className="text-yellow-300">Tailor</span>
           </h1>
           <p className="text-white/90 text-lg max-w-2xl mx-auto font-medium">
-            Transform ordinary templates into viral masterpieces with just a few clicks! Select a template, add your
-            text, and share your creation with the world.
+            Transform ordinary templates into viral masterpieces with just a few
+            clicks! Select a template, add your text, and share your creation
+            with the world.
           </p>
         </div>
         <div className="absolute -bottom-6 left-1/2 transform -translate-x-1/2">
@@ -143,7 +179,7 @@ export function MemeGrid({ memes, selectedMeme: initialSelectedMeme }: MemeGridP
 
           <div className="grid grid-cols-2 md:grid-cols-3 gap-5">
             {memes.map((meme: Meme) => {
-              const isSelected = selectedMeme?.id === meme.id
+              const isSelected = selectedMeme?.id === meme.id;
               return (
                 <div key={meme.id}>
                   <button
@@ -156,7 +192,9 @@ export function MemeGrid({ memes, selectedMeme: initialSelectedMeme }: MemeGridP
                         isSelected
                           ? "ring-4 ring-pink-400 dark:ring-pink-500 transform scale-[1.03] shadow-xl"
                           : "shadow-md hover:shadow-xl hover:scale-[1.02] border border-pink-100 dark:border-pink-900"
-                      } ${isSelectingMeme ? "opacity-70 cursor-not-allowed" : ""}`}
+                      } ${
+                      isSelectingMeme ? "opacity-70 cursor-not-allowed" : ""
+                    }`}
                   >
                     <div className="relative w-full aspect-square mb-3 flex items-center justify-center overflow-hidden rounded-lg bg-gray-100 dark:bg-gray-900">
                       {isSelectingMeme && isSelected && (
@@ -175,7 +213,7 @@ export function MemeGrid({ memes, selectedMeme: initialSelectedMeme }: MemeGridP
                     </h3>
                   </button>
                 </div>
-              )
+              );
             })}
           </div>
         </div>
@@ -185,7 +223,7 @@ export function MemeGrid({ memes, selectedMeme: initialSelectedMeme }: MemeGridP
           <div className="fixed bottom-6 right-6 z-20 lg:hidden">
             <Drawer>
               <DrawerTrigger asChild>
-                <Button 
+                <Button
                   className="bg-gradient-to-r from-pink-600 to-indigo-600 rounded-full h-14 w-14 shadow-lg"
                   size="icon"
                 >
@@ -201,14 +239,14 @@ export function MemeGrid({ memes, selectedMeme: initialSelectedMeme }: MemeGridP
                     Customize your selected meme with funny text
                   </DrawerDescription>
                 </DrawerHeader>
-                
+
                 {/* Mobile Meme Editor Content */}
                 <div className="p-4 pb-8">
                   {/* Meme Preview */}
                   <div className="relative group mb-6 flex justify-center">
                     <div className="absolute -inset-1 bg-gradient-to-r from-pink-500 via-purple-500 to-indigo-500 rounded-lg blur opacity-30 group-hover:opacity-70 transition duration-1000"></div>
-                    <div 
-                      ref={memeRef} 
+                    <div
+                      ref={memeRef}
                       className="relative bg-white dark:bg-gray-800 p-2 rounded-lg"
                     >
                       <div className="relative">
@@ -244,15 +282,18 @@ export function MemeGrid({ memes, selectedMeme: initialSelectedMeme }: MemeGridP
                       </div>
                     </div>
                   </div>
-                  
+
                   {/* Error Alert - Mobile */}
                   {error && (
-                    <Alert variant="destructive" className="mb-3 animate-in fade-in slide-in-from-top-5 duration-500">
+                    <Alert
+                      variant="destructive"
+                      className="mb-3 animate-in fade-in slide-in-from-top-5 duration-500"
+                    >
                       <AlertTriangle className="h-4 w-4" />
                       <AlertTitle>Error</AlertTitle>
                       <AlertDescription className="text-sm">
-                        {error.includes("Rate limit") 
-                          ? "You've hit the rate limit. Please wait a few minutes before trying again." 
+                        {error.includes("Rate limit")
+                          ? "You've hit the rate limit. Please wait a few minutes before trying again."
                           : error}
                       </AlertDescription>
                     </Alert>
@@ -260,11 +301,22 @@ export function MemeGrid({ memes, selectedMeme: initialSelectedMeme }: MemeGridP
 
                   {/* Mobile Form */}
                   <form onSubmit={handleSubmitEdit} className="space-y-3">
-                    <input type="hidden" name="memeId" value={selectedMeme.id} />
-                    <input type="hidden" name="boxCount" value={selectedMeme.box_count} />
+                    <input
+                      type="hidden"
+                      name="memeId"
+                      value={selectedMeme.id}
+                    />
+                    <input
+                      type="hidden"
+                      name="boxCount"
+                      value={selectedMeme.box_count}
+                    />
 
                     <div>
-                      <label htmlFor="text0-mobile" className="block text-sm font-bold mb-2 text-pink-700 dark:text-pink-300">
+                      <label
+                        htmlFor="text0-mobile"
+                        className="block text-sm font-bold mb-2 text-pink-700 dark:text-pink-300"
+                      >
                         Edit Image Instruction ✏️
                       </label>
                       <Textarea
@@ -316,7 +368,10 @@ export function MemeGrid({ memes, selectedMeme: initialSelectedMeme }: MemeGridP
                     {generatedMemeUrl && (
                       <>
                         <div>
-                          <label htmlFor="topText-mobile" className="block text-sm font-bold mb-2 text-pink-700 dark:text-pink-300">
+                          <label
+                            htmlFor="topText-mobile"
+                            className="block text-sm font-bold mb-2 text-pink-700 dark:text-pink-300"
+                          >
                             Top Text 👆
                           </label>
                           <Textarea
@@ -332,7 +387,10 @@ export function MemeGrid({ memes, selectedMeme: initialSelectedMeme }: MemeGridP
                         </div>
 
                         <div>
-                          <label htmlFor="bottomText-mobile" className="block text-sm font-bold mb-2 text-pink-700 dark:text-pink-300">
+                          <label
+                            htmlFor="bottomText-mobile"
+                            className="block text-sm font-bold mb-2 text-pink-700 dark:text-pink-300"
+                          >
                             Bottom Text 👇
                           </label>
                           <Textarea
@@ -373,8 +431,8 @@ export function MemeGrid({ memes, selectedMeme: initialSelectedMeme }: MemeGridP
 
                   <div className="mt-6 w-full">
                     <DrawerClose asChild>
-                      <Button 
-                        variant="outline" 
+                      <Button
+                        variant="outline"
                         className="w-full border-2 border-gray-200 dark:border-gray-700"
                       >
                         Close Editor
@@ -390,7 +448,11 @@ export function MemeGrid({ memes, selectedMeme: initialSelectedMeme }: MemeGridP
         {/* Desktop Edit panel - hidden on mobile */}
         <div className="w-full lg:w-1/3 flex-col gap-4 hidden lg:flex h-[600px] overflow-y-auto">
           <Card
-            className={`border-2 ${selectedMeme ? "border-pink-300 dark:border-pink-700" : "border-gray-200 dark:border-gray-700"} shadow-xl h-full`}
+            className={`border-2 ${
+              selectedMeme
+                ? "border-pink-300 dark:border-pink-700"
+                : "border-gray-200 dark:border-gray-700"
+            } shadow-xl h-full`}
           >
             <div className="bg-gradient-to-r from-pink-500 via-purple-500 to-indigo-500 h-2"></div>
             <CardContent className="px-2 overflow-y-auto flex flex-col h-[calc(100%-8px)]">
@@ -398,13 +460,15 @@ export function MemeGrid({ memes, selectedMeme: initialSelectedMeme }: MemeGridP
                 <div className="space-y-6">
                   <div className="flex items-center gap-2">
                     <Zap className="w-5 h-5 text-yellow-500" />
-                    <h2 className="text-xl font-extrabold">Meme Creator 9000</h2>
+                    <h2 className="text-xl font-extrabold">
+                      Meme Creator 9000
+                    </h2>
                   </div>
 
                   <div className="relative group mb-6 flex justify-center">
                     <div className="absolute -inset-1 bg-gradient-to-r from-pink-500 via-purple-500 to-indigo-500 rounded-lg blur opacity-30 group-hover:opacity-70 transition duration-1000"></div>
-                    <div 
-                      ref={memeRef} 
+                    <div
+                      ref={memeRef}
                       className="relative bg-white dark:bg-gray-800 p-2 rounded-lg"
                     >
                       <div className="relative">
@@ -440,25 +504,42 @@ export function MemeGrid({ memes, selectedMeme: initialSelectedMeme }: MemeGridP
                       </div>
                     </div>
                   </div>
-                  
+
                   {error && (
-                    <Alert variant="destructive" className="mt-2 mb-2 animate-in fade-in slide-in-from-top-5 duration-500">
+                    <Alert
+                      variant="destructive"
+                      className="mt-2 mb-2 animate-in fade-in slide-in-from-top-5 duration-500"
+                    >
                       <AlertTriangle className="h-4 w-4" />
                       <AlertTitle>Error</AlertTitle>
                       <AlertDescription className="text-sm">
-                        {error.includes("Rate limit") 
-                          ? "You've hit the rate limit. Please wait a few minutes before trying again." 
+                        {error.includes("Rate limit")
+                          ? "You've hit the rate limit. Please wait a few minutes before trying again."
                           : error}
                       </AlertDescription>
                     </Alert>
                   )}
 
-                  <form onSubmit={handleSubmitEdit} className="space-y-3 flex-shrink-0">
-                    <input type="hidden" name="memeId" value={selectedMeme.id} />
-                    <input type="hidden" name="boxCount" value={selectedMeme.box_count} />
+                  <form
+                    onSubmit={handleSubmitEdit}
+                    className="space-y-3 flex-shrink-0"
+                  >
+                    <input
+                      type="hidden"
+                      name="memeId"
+                      value={selectedMeme.id}
+                    />
+                    <input
+                      type="hidden"
+                      name="boxCount"
+                      value={selectedMeme.box_count}
+                    />
 
                     <div>
-                      <label htmlFor="text0" className="block text-sm font-bold mb-2 text-pink-700 dark:text-pink-300">
+                      <label
+                        htmlFor="text0"
+                        className="block text-sm font-bold mb-2 text-pink-700 dark:text-pink-300"
+                      >
                         Edit Image Instruction ✏️
                       </label>
                       <Textarea
@@ -510,7 +591,10 @@ export function MemeGrid({ memes, selectedMeme: initialSelectedMeme }: MemeGridP
                     {generatedMemeUrl && (
                       <>
                         <div>
-                          <label htmlFor="topText" className="block text-sm font-bold mb-2 text-pink-700 dark:text-pink-300">
+                          <label
+                            htmlFor="topText"
+                            className="block text-sm font-bold mb-2 text-pink-700 dark:text-pink-300"
+                          >
                             Top Text 👆
                           </label>
                           <Textarea
@@ -526,7 +610,10 @@ export function MemeGrid({ memes, selectedMeme: initialSelectedMeme }: MemeGridP
                         </div>
 
                         <div>
-                          <label htmlFor="bottomText" className="block text-sm font-bold mb-2 text-pink-700 dark:text-pink-300">
+                          <label
+                            htmlFor="bottomText"
+                            className="block text-sm font-bold mb-2 text-pink-700 dark:text-pink-300"
+                          >
                             Bottom Text 👇
                           </label>
                           <Textarea
@@ -577,7 +664,8 @@ export function MemeGrid({ memes, selectedMeme: initialSelectedMeme }: MemeGridP
                     Select a meme template to start your viral masterpiece!
                   </p>
                   <p className="text-sm text-gray-500 dark:text-gray-400">
-                    Pick from the collection on the left and unleash your creativity
+                    Pick from the collection on the left and unleash your
+                    creativity
                   </p>
                 </div>
               )}
@@ -586,5 +674,5 @@ export function MemeGrid({ memes, selectedMeme: initialSelectedMeme }: MemeGridP
         </div>
       </div>
     </div>
-  )
+  );
 }
