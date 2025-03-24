@@ -140,13 +140,16 @@
   }
 }
 
-/* Meme text shadow effect */
+/* Meme text shadow effect - simple clean version */
 .text-shadow-meme {
+  /* Simple text shadow approach for clean outline */
   text-shadow: 
-    -1px -1px 0 #000,
-    1px -1px 0 #000,
-    -1px 1px 0 #000,
-    1px 1px 0 #000;
-  image-rendering: -webkit-optimize-contrast;
-  text-rendering: optimizeLegibility;
+    1px 1px 1px #000,
+    -1px 1px 1px #000,
+    1px -1px 1px #000,
+    -1px -1px 1px #000;
+  
+  /* Clean font rendering */
+  -webkit-font-smoothing: antialiased;
+  font-weight: 700;
 }
