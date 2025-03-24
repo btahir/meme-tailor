@@ -123,7 +123,7 @@ export default function MemeGrid({ memes }: MemeGridProps) {
                       <img
                         src={meme.url || "/placeholder.svg"}
                         alt={meme.name}
-                        className="w-full h-full object-contain p-2"
+                        className="w-full h-full object-contain max-h-[150px] p-2"
                       />
                     </div>
                     <h3 className="text-sm font-bold text-center line-clamp-1 text-pink-800 dark:text-pink-300">
@@ -168,13 +168,13 @@ export default function MemeGrid({ memes }: MemeGridProps) {
                         <img
                           src={generatedMemeUrl || "/placeholder.svg"}
                           alt="Generated Meme"
-                          className="max-h-[200px] max-w-full object-contain rounded"
+                          className="max-h-[200px] w-auto object-contain rounded max-w-full"
                         />
                       ) : (
                         <img
                           src={selectedMeme.url || "/placeholder.svg"}
                           alt={selectedMeme.name}
-                          className="max-h-[200px] max-w-full object-contain rounded"
+                          className="max-h-[200px] w-auto object-contain rounded max-w-full"
                         />
                       )}
                     </div>
@@ -267,12 +267,12 @@ export default function MemeGrid({ memes }: MemeGridProps) {
         )}
 
         {/* Desktop Edit panel - hidden on mobile */}
-        <div className="w-full lg:w-1/3 flex-col gap-4 hidden lg:flex">
+        <div className="w-full lg:w-1/3 flex-col gap-4 hidden lg:flex h-[600px] overflow-y-auto">
           <Card
-            className={`border-2 ${selectedMeme ? "border-pink-300 dark:border-pink-700" : "border-gray-200 dark:border-gray-700"} shadow-xl overflow-hidden`}
+            className={`border-2 ${selectedMeme ? "border-pink-300 dark:border-pink-700" : "border-gray-200 dark:border-gray-700"} shadow-xl h-full`}
           >
             <div className="bg-gradient-to-r from-pink-500 via-purple-500 to-indigo-500 h-2"></div>
-            <CardContent className="p-6">
+            <CardContent className="px-2">
               {selectedMeme ? (
                 <div className="space-y-6">
                   <div className="flex items-center gap-2">
@@ -287,13 +287,13 @@ export default function MemeGrid({ memes }: MemeGridProps) {
                         <img
                           src={generatedMemeUrl || "/placeholder.svg"}
                           alt="Generated Meme"
-                          className="max-h-[300px] max-w-full object-contain rounded"
+                          className="h-[220px] w-auto object-contain rounded max-w-full"
                         />
                       ) : (
                         <img
                           src={selectedMeme.url || "/placeholder.svg"}
                           alt={selectedMeme.name}
-                          className="max-h-[300px] max-w-full object-contain rounded"
+                          className="h-[220px] w-auto object-contain rounded max-w-full"
                         />
                       )}
                     </div>
