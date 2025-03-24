@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, type FormEvent, useRef } from "react"
+import { useState, type FormEvent, useRef, useEffect } from "react"
 import type { Meme } from "@/types/meme"
 import { submitMemeEdit } from "@/app/actions"
 import { Sparkles, Download, RefreshCw, Zap, Edit, AlertTriangle } from "lucide-react"
@@ -32,7 +32,6 @@ export function MemeGrid({ memes, selectedMeme: initialSelectedMeme }: MemeGridP
   const [error, setError] = useState<string | null>(null)
   const [topText, setTopText] = useState("")
   const [bottomText, setBottomText] = useState("")
-  const [customMemeUrl, setCustomMemeUrl] = useState<string | null>(null)
   const [isCapturing, setIsCapturing] = useState(false)
   const memeRef = useRef<HTMLDivElement>(null)
 
@@ -40,7 +39,6 @@ export function MemeGrid({ memes, selectedMeme: initialSelectedMeme }: MemeGridP
     setIsSelectingMeme(true)
     setSelectedMeme(meme)
     setGeneratedMemeUrl(null)
-    setCustomMemeUrl(null)
     setTopText("")
     setBottomText("")
     setError(null)
@@ -83,7 +81,6 @@ export function MemeGrid({ memes, selectedMeme: initialSelectedMeme }: MemeGridP
       htmlToImage
         .toPng(memeRef.current)
         .then((dataUrl) => {
-          setCustomMemeUrl(dataUrl);
           setIsCapturing(false);
           
           // Create a download link and trigger it automatically
@@ -101,6 +98,19 @@ export function MemeGrid({ memes, selectedMeme: initialSelectedMeme }: MemeGridP
         });
     }
   };
+
+  useEffect(() => {
+    if (generatedMemeUrl) {
+      // Reset any previous state when a new meme is generated
+    }
+  }, [generatedMemeUrl]);
+
+  useEffect(() => {
+    setGeneratedMemeUrl(null);
+    setTopText("");
+    setBottomText("");
+    setError(null);
+  }, [selectedMeme?.id]);
 
   return (
     <div className="animate-in fade-in duration-500">
@@ -202,13 +212,7 @@ export function MemeGrid({ memes, selectedMeme: initialSelectedMeme }: MemeGridP
                       className="relative bg-white dark:bg-gray-800 p-2 rounded-lg"
                     >
                       <div className="relative">
-                        {customMemeUrl ? (
-                          <img
-                            src={customMemeUrl}
-                            alt="Custom Meme"
-                            className="max-h-[200px] w-auto object-contain rounded max-w-full"
-                          />
-                        ) : generatedMemeUrl ? (
+                        {generatedMemeUrl ? (
                           <div className="relative inline-block">
                             <img
                               src={generatedMemeUrl || "/placeholder.svg"}
@@ -404,13 +408,7 @@ export function MemeGrid({ memes, selectedMeme: initialSelectedMeme }: MemeGridP
                       className="relative bg-white dark:bg-gray-800 p-2 rounded-lg"
                     >
                       <div className="relative">
-                        {customMemeUrl ? (
-                          <img
-                            src={customMemeUrl}
-                            alt="Custom Meme"
-                            className="h-[220px] w-auto object-contain rounded max-w-full"
-                          />
-                        ) : generatedMemeUrl ? (
+                        {generatedMemeUrl ? (
                           <div className="relative inline-block">
                             <img
                               src={generatedMemeUrl || "/placeholder.svg"}
