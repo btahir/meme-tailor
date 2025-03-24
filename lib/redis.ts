@@ -6,7 +6,7 @@ export const redis = new Redis({
   token: process.env.UPSTASH_REDIS_REST_TOKEN || '',
 })
 
-// Allow 5 meme generations per 10 minutes
+// Allow 10 meme generations per 15 minutes
 export const ratelimit = new Ratelimit({
   redis,
   limiter: Ratelimit.slidingWindow(10, '15 m'),
