@@ -2,8 +2,8 @@
 
 import { useState, type FormEvent } from "react"
 import type { Meme } from "@/types/meme"
-import { selectMeme, submitMemeEdit } from "@/app/actions"
-import { Sparkles, Download, RefreshCw, Zap, Edit } from "lucide-react"
+import { submitMemeEdit } from "@/app/actions"
+import { Sparkles, Download, RefreshCw, Zap, Edit, AlertTriangle } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Textarea } from "@/components/ui/textarea"
@@ -16,53 +16,53 @@ import {
   DrawerTitle,
   DrawerTrigger,
 } from "@/components/ui/drawer"
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 
 interface MemeGridProps {
   memes: Meme[]
+  selectedMeme?: Meme
 }
 
-export default function MemeGrid({ memes }: MemeGridProps) {
-  const [selectedMeme, setSelectedMeme] = useState<Meme | null>(null)
-  const [isSelectingMeme, setIsSelectingMeme] = useState(false)
+export function MemeGrid({ memes, selectedMeme: initialSelectedMeme }: MemeGridProps) {
   const [isSubmittingEdit, setIsSubmittingEdit] = useState(false)
   const [generatedMemeUrl, setGeneratedMemeUrl] = useState<string | null>(null)
+  const [isSelectingMeme, setIsSelectingMeme] = useState(false)
+  const [selectedMeme, setSelectedMeme] = useState<Meme | undefined>(initialSelectedMeme)
+  const [error, setError] = useState<string | null>(null)
 
-  // Handle meme selection with loading state
-  const handleSelectMeme = async (formData: FormData) => {
-    const memeId = formData.get("memeId") as string
-    const selected = memes.find((meme) => meme.id === memeId)
-
-    if (selected) {
-      setIsSelectingMeme(true)
-      try {
-        await selectMeme(formData)
-        setSelectedMeme(selected)
-        // Reset any previously generated meme when selecting a new template
-        setGeneratedMemeUrl(null)
-      } catch (error) {
-        console.error("Error selecting meme:", error)
-      } finally {
-        setIsSelectingMeme(false)
-      }
-    }
+  const handleSelectMeme = (meme: Meme) => {
+    setIsSelectingMeme(true)
+    setSelectedMeme(meme)
+    setGeneratedMemeUrl(null)
+    setError(null)
+    setIsSelectingMeme(false)
   }
 
-  // Handle meme edit submission with loading state
-  const handleSubmitEdit = async (event: FormEvent) => {
-    event.preventDefault()
+  const handleSubmitEdit = async (e: FormEvent<HTMLFormElement>) => {
+    e.preventDefault()
+    if (!selectedMeme) return
+
     setIsSubmittingEdit(true)
+    setGeneratedMemeUrl(null)
+    setError(null)
 
     try {
-      const formData = new FormData(event.target as HTMLFormElement)
+      const formData = new FormData(e.currentTarget)
       const result = await submitMemeEdit(formData)
 
       if (result.success && result.imageUrl) {
         setGeneratedMemeUrl(result.imageUrl)
       } else {
         console.error("Error generating meme:", result.error)
+        setError(result.error || "Failed to generate meme")
       }
     } catch (error) {
-      console.error("Error submitting meme edit:", error)
+      if (error instanceof Error && error.message.includes("429")) {
+        setError("You've hit the rate limit. Please wait a few minutes before trying again.")
+      } else {
+        console.error("Error submitting edit:", error)
+        setError("An unexpected error occurred")
+      }
     } finally {
       setIsSubmittingEdit(false)
     }
@@ -101,10 +101,10 @@ export default function MemeGrid({ memes }: MemeGridProps) {
             {memes.map((meme: Meme) => {
               const isSelected = selectedMeme?.id === meme.id
               return (
-                <form key={meme.id} action={handleSelectMeme}>
-                  <input type="hidden" name="memeId" value={meme.id} />
+                <div key={meme.id}>
                   <button
-                    type="submit"
+                    type="button"
+                    onClick={() => handleSelectMeme(meme)}
                     disabled={isSelectingMeme}
                     className={`w-full bg-white dark:bg-gray-800 rounded-xl overflow-hidden 
                       transition-all duration-300 p-3 flex flex-col items-center h-full 
@@ -130,7 +130,7 @@ export default function MemeGrid({ memes }: MemeGridProps) {
                       {meme.name}
                     </h3>
                   </button>
-                </form>
+                </div>
               )
             })}
           </div>
@@ -179,6 +179,19 @@ export default function MemeGrid({ memes }: MemeGridProps) {
                       )}
                     </div>
                   </div>
+                  
+                  {/* Error Alert - Mobile */}
+                  {error && (
+                    <Alert variant="destructive" className="mb-4 animate-in fade-in slide-in-from-top-5 duration-500">
+                      <AlertTriangle className="h-4 w-4" />
+                      <AlertTitle>Error</AlertTitle>
+                      <AlertDescription>
+                        {error.includes("Rate limit") 
+                          ? "You've hit the rate limit. Please wait a few minutes before trying again." 
+                          : error}
+                      </AlertDescription>
+                    </Alert>
+                  )}
 
                   {/* Mobile Form */}
                   <form onSubmit={handleSubmitEdit} className="space-y-5">
@@ -298,6 +311,18 @@ export default function MemeGrid({ memes }: MemeGridProps) {
                       )}
                     </div>
                   </div>
+                  
+                  {error && (
+                    <Alert variant="destructive" className="mt-4 animate-in fade-in slide-in-from-top-5 duration-500">
+                      <AlertTriangle className="h-4 w-4" />
+                      <AlertTitle>Error</AlertTitle>
+                      <AlertDescription>
+                        {error.includes("Rate limit") 
+                          ? "You've hit the rate limit. Please wait a few minutes before trying again." 
+                          : error}
+                      </AlertDescription>
+                    </Alert>
+                  )}
 
                   <form onSubmit={handleSubmitEdit} className="space-y-5">
                     <input type="hidden" name="memeId" value={selectedMeme.id} />

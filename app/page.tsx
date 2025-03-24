@@ -1,5 +1,5 @@
 import { getMemes } from "./actions"
-import MemeGrid from "@/components/MemeGrid"
+import { MemeGrid } from "@/components/MemeGrid"
 import type { Metadata } from "next"
 
 export const metadata: Metadata = {
@@ -39,10 +39,9 @@ export default async function Home() {
       </main>
 
       <footer className="max-w-6xl mx-auto px-4 sm:px-6 py-6 text-center text-gray-500 dark:text-gray-400 text-sm">
-        <p>© {new Date().getFullYear()} Meme Tailor. All rights reserved.</p>
+        <p> {new Date().getFullYear()} Meme Tailor. All rights reserved.</p>
         <p className="mt-1">Made with ❤️ for meme lovers everywhere</p>
       </footer>
     </div>
   )
 }
-

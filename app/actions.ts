@@ -2,6 +2,7 @@
 
 import { Meme } from "@/types/meme";
 import { GoogleGenerativeAI } from "@google/generative-ai";
+import { ratelimit } from "@/lib/redis";
 
 // Interface for the API response
 interface MemesResponse {
@@ -42,13 +43,6 @@ export async function getMemes(): Promise<MemesResponse> {
   }
 }
 
-export async function selectMeme(formData: FormData): Promise<void> {
-  const memeId = formData.get("memeId") as string;
-
-  // Process the meme ID selection but don't return anything (void)
-  console.log(`Selected meme with ID: ${memeId}`);
-}
-
 /**
  * Fetch image data from a URL as ArrayBuffer
  */
@@ -79,29 +73,36 @@ export async function submitMemeEdit(formData: FormData): Promise<{
   details?: string;
 }> {
   const memeId = formData.get("memeId") as string;
+  const boxCount = parseInt(formData.get("boxCount") as string);
   const memeText = formData.get("text0") as string;
 
+  // Rate limit check for meme generation
+  const identifier = "meme-generation";
+  
   try {
-    // Validate inputs
+    const { success } = await ratelimit.limit(identifier);
+
+    if (!success) {
+      return {
+        success: false,
+        error: "Rate limit exceeded. Please try again in a few minutes.",
+      };
+    }
+
+    // Validate required fields
     if (!memeId || !memeText) {
       return {
         success: false,
-        error: "Missing required fields",
-        details: "Both meme template and text are required",
+        error: "Missing required fields: memeId or text",
       };
     }
 
-    // Validate prompt length
-    if (memeText.length < 2) {
+    // Validate box count to ensure we don't try to add text to boxes that don't exist
+    if (boxCount <= 0 || isNaN(boxCount)) {
       return {
         success: false,
-        error: "Invalid input",
-        details: "Meme text must be at least 2 characters long",
+        error: "Invalid box count",
       };
-    }
-
-    if (!process.env.GEMINI_API_KEY) {
-      throw new Error("GEMINI_API_KEY environment variable is not set");
     }
 
     // First, get all memes to find the selected one
@@ -129,7 +130,7 @@ export async function submitMemeEdit(formData: FormData): Promise<{
     const mimeType = "image/jpeg"; // Assuming JPEG for meme images
 
     // Generate a prompt for creating the meme
-    const prompt = `Edit the entire image according to this instruction: ${memeText}.`;
+    const prompt = `Edit the entire image according to this instruction: ${memeText}. The template has ${boxCount} text areas.`;
 
     // Send the request to Gemini
     console.log("Sending request to Gemini...");
@@ -251,4 +252,12 @@ export async function submitMemeEdit(formData: FormData): Promise<{
       details: "An unknown error occurred",
     };
   }
+}
+
+// This function is no longer used as selection is handled client-side
+export async function selectMeme(formData: FormData): Promise<void> {
+  const memeId = formData.get("memeId") as string;
+  
+  // Process the meme ID selection but don't return anything (void)
+  console.log(`Selected meme with ID: ${memeId}`);
 }
