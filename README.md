@@ -1,6 +1,8 @@
 # Meme Tailor
 
-![Meme Tailor Preview](/app/opengraph-image.png)
+<div align="center">
+  <img src="demo.gif" alt="Meme Tailor Demo" width="800"/>
+</div>
 
 Meme Tailor is a modern web application that transforms ordinary meme templates into personalized memes with the help of AI. Select from popular templates, add your funny text, and watch as AI generates a custom meme for you to share.
 
