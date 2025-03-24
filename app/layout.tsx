@@ -5,6 +5,7 @@ import "./globals.css";
 const fontMain = Jost({
   variable: "--font-main",
   subsets: ["latin"],
+  display: "swap",
 });
 
 export const metadata: Metadata = {
@@ -20,7 +21,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body
-        className={`${fontMain.variable} antialiased`}
+        className={`${fontMain.className} antialiased`}
       >
         {children}
       </body>
