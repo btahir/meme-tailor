@@ -241,7 +241,7 @@ export function MemeGrid({
                 </DrawerHeader>
 
                 {/* Mobile Meme Editor Content */}
-                <div className="p-4 pb-8">
+                <div className="p-4 pb-8 max-h-[70vh] overflow-y-auto">
                   {/* Meme Preview */}
                   <div className="relative group mb-6 flex justify-center">
                     <div className="absolute -inset-1 bg-gradient-to-r from-pink-500 via-purple-500 to-indigo-500 rounded-lg blur opacity-30 group-hover:opacity-70 transition duration-1000"></div>
