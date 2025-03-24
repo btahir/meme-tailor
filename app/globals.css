@@ -139,3 +139,14 @@
     @apply bg-background text-foreground;
   }
 }
+
+/* Meme text shadow effect */
+.text-shadow-meme {
+  text-shadow: 
+    -1px -1px 0 #000,
+    1px -1px 0 #000,
+    -1px 1px 0 #000,
+    1px 1px 0 #000;
+  image-rendering: -webkit-optimize-contrast;
+  text-rendering: optimizeLegibility;
+}

@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, type FormEvent } from "react"
+import { useState, type FormEvent, useRef } from "react"
 import type { Meme } from "@/types/meme"
 import { submitMemeEdit } from "@/app/actions"
 import { Sparkles, Download, RefreshCw, Zap, Edit, AlertTriangle } from "lucide-react"
@@ -17,6 +17,7 @@ import {
   DrawerTrigger,
 } from "@/components/ui/drawer"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
+import * as htmlToImage from 'html-to-image'
 
 interface MemeGridProps {
   memes: Meme[]
@@ -29,11 +30,19 @@ export function MemeGrid({ memes, selectedMeme: initialSelectedMeme }: MemeGridP
   const [isSelectingMeme, setIsSelectingMeme] = useState(false)
   const [selectedMeme, setSelectedMeme] = useState<Meme | undefined>(initialSelectedMeme)
   const [error, setError] = useState<string | null>(null)
+  const [topText, setTopText] = useState("")
+  const [bottomText, setBottomText] = useState("")
+  const [customMemeUrl, setCustomMemeUrl] = useState<string | null>(null)
+  const [isCapturing, setIsCapturing] = useState(false)
+  const memeRef = useRef<HTMLDivElement>(null)
 
   const handleSelectMeme = (meme: Meme) => {
     setIsSelectingMeme(true)
     setSelectedMeme(meme)
     setGeneratedMemeUrl(null)
+    setCustomMemeUrl(null)
+    setTopText("")
+    setBottomText("")
     setError(null)
     setIsSelectingMeme(false)
   }
@@ -67,6 +76,31 @@ export function MemeGrid({ memes, selectedMeme: initialSelectedMeme }: MemeGridP
       setIsSubmittingEdit(false)
     }
   }
+
+  const captureScreenshot = () => {
+    if (memeRef.current) {
+      setIsCapturing(true);
+      htmlToImage
+        .toPng(memeRef.current)
+        .then((dataUrl) => {
+          setCustomMemeUrl(dataUrl);
+          setIsCapturing(false);
+          
+          // Create a download link and trigger it automatically
+          const downloadLink = document.createElement('a');
+          downloadLink.href = dataUrl;
+          downloadLink.download = 'viral-meme.jpg';
+          document.body.appendChild(downloadLink);
+          downloadLink.click();
+          document.body.removeChild(downloadLink);
+        })
+        .catch((error) => {
+          console.error('Error generating screenshot:', error);
+          setError('Failed to generate screenshot');
+          setIsCapturing(false);
+        });
+    }
+  };
 
   return (
     <div className="animate-in fade-in duration-500">
@@ -163,20 +197,47 @@ export function MemeGrid({ memes, selectedMeme: initialSelectedMeme }: MemeGridP
                   {/* Meme Preview */}
                   <div className="relative group mb-6 flex justify-center">
                     <div className="absolute -inset-1 bg-gradient-to-r from-pink-500 via-purple-500 to-indigo-500 rounded-lg blur opacity-30 group-hover:opacity-70 transition duration-1000"></div>
-                    <div className="relative bg-white dark:bg-gray-800 p-2 rounded-lg">
-                      {generatedMemeUrl ? (
-                        <img
-                          src={generatedMemeUrl || "/placeholder.svg"}
-                          alt="Generated Meme"
-                          className="max-h-[200px] w-auto object-contain rounded max-w-full"
-                        />
-                      ) : (
-                        <img
-                          src={selectedMeme.url || "/placeholder.svg"}
-                          alt={selectedMeme.name}
-                          className="max-h-[200px] w-auto object-contain rounded max-w-full"
-                        />
-                      )}
+                    <div 
+                      ref={memeRef} 
+                      className="relative bg-white dark:bg-gray-800 p-2 rounded-lg"
+                    >
+                      <div className="relative">
+                        {customMemeUrl ? (
+                          <img
+                            src={customMemeUrl}
+                            alt="Custom Meme"
+                            className="max-h-[200px] w-auto object-contain rounded max-w-full"
+                          />
+                        ) : generatedMemeUrl ? (
+                          <div className="relative inline-block">
+                            <img
+                              src={generatedMemeUrl || "/placeholder.svg"}
+                              alt="Generated Meme"
+                              className="max-h-[200px] w-auto object-contain rounded max-w-full"
+                            />
+                            {topText && (
+                              <div className="absolute top-2 left-0 right-0 text-center">
+                                <p className="text-white text-lg font-bold uppercase break-words mx-2 text-shadow-meme">
+                                  {topText}
+                                </p>
+                              </div>
+                            )}
+                            {bottomText && (
+                              <div className="absolute bottom-2 left-0 right-0 text-center">
+                                <p className="text-white text-lg font-bold uppercase break-words mx-2 text-shadow-meme">
+                                  {bottomText}
+                                </p>
+                              </div>
+                            )}
+                          </div>
+                        ) : (
+                          <img
+                            src={selectedMeme.url || "/placeholder.svg"}
+                            alt={selectedMeme.name}
+                            className="max-h-[200px] w-auto object-contain rounded max-w-full"
+                          />
+                        )}
+                      </div>
                     </div>
                   </div>
                   
@@ -200,13 +261,14 @@ export function MemeGrid({ memes, selectedMeme: initialSelectedMeme }: MemeGridP
 
                     <div>
                       <label htmlFor="text0-mobile" className="block text-sm font-bold mb-2 text-pink-700 dark:text-pink-300">
-                        Make It Funny 🤣
+                        Edit Image Instruction ✏️
                       </label>
                       <Textarea
                         id="text0-mobile"
                         name="text0"
-                        placeholder="Type something hilarious..."
-                        rows={3}
+                        placeholder="Type an instruction for creating your meme..."
+                        rows={2}
+                        required
                         disabled={isSubmittingEdit}
                         className="w-full border-2 border-pink-200 dark:border-pink-800 focus:border-pink-400 focus:ring-pink-400 rounded-lg
                                text-base font-medium placeholder:text-pink-300 dark:placeholder:text-pink-700"
@@ -218,8 +280,8 @@ export function MemeGrid({ memes, selectedMeme: initialSelectedMeme }: MemeGridP
                         type="submit"
                         disabled={isSubmittingEdit}
                         className="flex-1 bg-gradient-to-r from-pink-600 via-purple-600 to-indigo-600 hover:from-pink-700 hover:via-purple-700 hover:to-indigo-700 
-                             text-white font-bold py-3 px-4 rounded-lg shadow-lg hover:shadow-xl transition-all
-                             disabled:opacity-70 disabled:cursor-not-allowed"
+                               text-white font-bold py-3 px-4 rounded-lg shadow-lg hover:shadow-xl transition-all
+                               disabled:opacity-70 disabled:cursor-not-allowed"
                       >
                         {isSubmittingEdit ? (
                           <>
@@ -240,7 +302,7 @@ export function MemeGrid({ memes, selectedMeme: initialSelectedMeme }: MemeGridP
                           onClick={() => setGeneratedMemeUrl(null)}
                           variant="outline"
                           className="bg-transparent border-2 border-pink-300 dark:border-pink-700 text-pink-700 dark:text-pink-300
-                               hover:bg-pink-50 dark:hover:bg-pink-900/30 font-bold rounded-lg w-12 flex-shrink-0 flex items-center justify-center"
+                                 hover:bg-pink-50 dark:hover:bg-pink-900/30 font-bold rounded-lg w-12 flex-shrink-0 flex items-center justify-center"
                         >
                           <RefreshCw className="w-4 h-4" />
                         </Button>
@@ -248,18 +310,60 @@ export function MemeGrid({ memes, selectedMeme: initialSelectedMeme }: MemeGridP
                     </div>
 
                     {generatedMemeUrl && (
-                      <div className="mt-4 flex justify-center animate-in fade-in slide-in-from-bottom-5 duration-500">
-                        <Button
-                          asChild
-                          className="bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700
-                               text-white font-bold py-2 px-6 rounded-full shadow-lg hover:shadow-xl transition-all w-full"
-                        >
-                          <a href={generatedMemeUrl} download="viral-meme.jpg">
-                            <Download className="w-5 h-5 mr-2" />
-                            Download & Share
-                          </a>
-                        </Button>
-                      </div>
+                      <>
+                        <div>
+                          <label htmlFor="topText-mobile" className="block text-sm font-bold mb-2 text-pink-700 dark:text-pink-300">
+                            Top Text 👆
+                          </label>
+                          <Textarea
+                            id="topText-mobile"
+                            value={topText}
+                            onChange={(e) => setTopText(e.target.value)}
+                            placeholder="Type top text here..."
+                            rows={2}
+                            disabled={isSubmittingEdit}
+                            className="w-full border-2 border-pink-200 dark:border-pink-800 focus:border-pink-400 focus:ring-pink-400 rounded-lg
+                                 text-base font-medium placeholder:text-pink-300 dark:placeholder:text-pink-700"
+                          />
+                        </div>
+
+                        <div>
+                          <label htmlFor="bottomText-mobile" className="block text-sm font-bold mb-2 text-pink-700 dark:text-pink-300">
+                            Bottom Text 👇
+                          </label>
+                          <Textarea
+                            id="bottomText-mobile"
+                            value={bottomText}
+                            onChange={(e) => setBottomText(e.target.value)}
+                            placeholder="Type bottom text here..."
+                            rows={2}
+                            disabled={isSubmittingEdit}
+                            className="w-full border-2 border-pink-200 dark:border-pink-800 focus:border-pink-400 focus:ring-pink-400 rounded-lg
+                                 text-base font-medium placeholder:text-pink-300 dark:placeholder:text-pink-700"
+                          />
+                        </div>
+
+                        <div className="mt-4 flex justify-center animate-in fade-in slide-in-from-bottom-5 duration-500">
+                          <Button
+                            onClick={captureScreenshot}
+                            disabled={isCapturing}
+                            className="bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700
+                                 text-white font-bold py-2 px-6 rounded-full shadow-lg hover:shadow-xl transition-all w-full"
+                          >
+                            {isCapturing ? (
+                              <>
+                                <div className="h-5 w-5 border-t-2 border-l-2 border-white rounded-full animate-spin mr-2"></div>
+                                Processing...
+                              </>
+                            ) : (
+                              <>
+                                <Download className="w-5 h-5 mr-2" />
+                                Download & Share
+                              </>
+                            )}
+                          </Button>
+                        </div>
+                      </>
                     )}
                   </form>
 
@@ -295,20 +399,47 @@ export function MemeGrid({ memes, selectedMeme: initialSelectedMeme }: MemeGridP
 
                   <div className="relative group mb-6 flex justify-center">
                     <div className="absolute -inset-1 bg-gradient-to-r from-pink-500 via-purple-500 to-indigo-500 rounded-lg blur opacity-30 group-hover:opacity-70 transition duration-1000"></div>
-                    <div className="relative bg-white dark:bg-gray-800 p-2 rounded-lg">
-                      {generatedMemeUrl ? (
-                        <img
-                          src={generatedMemeUrl || "/placeholder.svg"}
-                          alt="Generated Meme"
-                          className="h-[220px] w-auto object-contain rounded max-w-full"
-                        />
-                      ) : (
-                        <img
-                          src={selectedMeme.url || "/placeholder.svg"}
-                          alt={selectedMeme.name}
-                          className="h-[220px] w-auto object-contain rounded max-w-full"
-                        />
-                      )}
+                    <div 
+                      ref={memeRef} 
+                      className="relative bg-white dark:bg-gray-800 p-2 rounded-lg"
+                    >
+                      <div className="relative">
+                        {customMemeUrl ? (
+                          <img
+                            src={customMemeUrl}
+                            alt="Custom Meme"
+                            className="h-[220px] w-auto object-contain rounded max-w-full"
+                          />
+                        ) : generatedMemeUrl ? (
+                          <div className="relative inline-block">
+                            <img
+                              src={generatedMemeUrl || "/placeholder.svg"}
+                              alt="Generated Meme"
+                              className="h-[220px] w-auto object-contain rounded max-w-full"
+                            />
+                            {topText && (
+                              <div className="absolute top-2 left-0 right-0 text-center">
+                                <p className="text-white text-xl font-bold uppercase break-words mx-2 text-shadow-meme">
+                                  {topText}
+                                </p>
+                              </div>
+                            )}
+                            {bottomText && (
+                              <div className="absolute bottom-2 left-0 right-0 text-center">
+                                <p className="text-white text-xl font-bold uppercase break-words mx-2 text-shadow-meme">
+                                  {bottomText}
+                                </p>
+                              </div>
+                            )}
+                          </div>
+                        ) : (
+                          <img
+                            src={selectedMeme.url || "/placeholder.svg"}
+                            alt={selectedMeme.name}
+                            className="h-[220px] w-auto object-contain rounded max-w-full"
+                          />
+                        )}
+                      </div>
                     </div>
                   </div>
                   
@@ -330,13 +461,14 @@ export function MemeGrid({ memes, selectedMeme: initialSelectedMeme }: MemeGridP
 
                     <div>
                       <label htmlFor="text0" className="block text-sm font-bold mb-2 text-pink-700 dark:text-pink-300">
-                        Make It Funny 🤣
+                        Edit Image Instruction ✏️
                       </label>
                       <Textarea
                         id="text0"
                         name="text0"
-                        placeholder="Type something hilarious..."
-                        rows={3}
+                        placeholder="Type an instruction for creating your meme..."
+                        rows={2}
+                        required
                         disabled={isSubmittingEdit}
                         className="w-full border-2 border-pink-200 dark:border-pink-800 focus:border-pink-400 focus:ring-pink-400 rounded-lg
                                  text-base font-medium placeholder:text-pink-300 dark:placeholder:text-pink-700"
@@ -378,18 +510,60 @@ export function MemeGrid({ memes, selectedMeme: initialSelectedMeme }: MemeGridP
                     </div>
 
                     {generatedMemeUrl && (
-                      <div className="mt-4 flex justify-center animate-in fade-in slide-in-from-bottom-5 duration-500">
-                        <Button
-                          asChild
-                          className="bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700
+                      <>
+                        <div>
+                          <label htmlFor="topText" className="block text-sm font-bold mb-2 text-pink-700 dark:text-pink-300">
+                            Top Text 👆
+                          </label>
+                          <Textarea
+                            id="topText"
+                            value={topText}
+                            onChange={(e) => setTopText(e.target.value)}
+                            placeholder="Type top text here..."
+                            rows={2}
+                            disabled={isSubmittingEdit}
+                            className="w-full border-2 border-pink-200 dark:border-pink-800 focus:border-pink-400 focus:ring-pink-400 rounded-lg
+                                 text-base font-medium placeholder:text-pink-300 dark:placeholder:text-pink-700"
+                          />
+                        </div>
+
+                        <div>
+                          <label htmlFor="bottomText" className="block text-sm font-bold mb-2 text-pink-700 dark:text-pink-300">
+                            Bottom Text 👇
+                          </label>
+                          <Textarea
+                            id="bottomText"
+                            value={bottomText}
+                            onChange={(e) => setBottomText(e.target.value)}
+                            placeholder="Type bottom text here..."
+                            rows={2}
+                            disabled={isSubmittingEdit}
+                            className="w-full border-2 border-pink-200 dark:border-pink-800 focus:border-pink-400 focus:ring-pink-400 rounded-lg
+                                 text-base font-medium placeholder:text-pink-300 dark:placeholder:text-pink-700"
+                          />
+                        </div>
+
+                        <div className="mt-4 flex justify-center animate-in fade-in slide-in-from-bottom-5 duration-500">
+                          <Button
+                            onClick={captureScreenshot}
+                            disabled={isCapturing}
+                            className="bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700
                                    text-white font-bold py-2 px-6 rounded-full shadow-lg hover:shadow-xl transition-all w-full"
-                        >
-                          <a href={generatedMemeUrl} download="viral-meme.jpg">
-                            <Download className="w-5 h-5 mr-2" />
-                            Download & Share
-                          </a>
-                        </Button>
-                      </div>
+                          >
+                            {isCapturing ? (
+                              <>
+                                <div className="h-5 w-5 border-t-2 border-l-2 border-white rounded-full animate-spin mr-2"></div>
+                                Processing...
+                              </>
+                            ) : (
+                              <>
+                                <Download className="w-5 h-5 mr-2" />
+                                Download & Share
+                              </>
+                            )}
+                          </Button>
+                        </div>
+                      </>
                     )}
                   </form>
                 </div>
